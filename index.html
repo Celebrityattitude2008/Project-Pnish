@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Advanced URL Safety Checker - Detect Phishing Threats</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, sans-serif;
+      background: #f8f9fa;
+      margin: 0;
+      padding: 0;
+      color: #333;
+    }
+    * { box-sizing: border-box; }
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 2rem;
+    }
+    h1 {
+      font-size: 2.5rem;
+      text-align: center;
+      color: #1a1a1a;
+      margin-bottom: 0.5rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .subtitle {
+      text-align: center;
+      font-size: 1rem;
+      color: #666;
+      margin-bottom: 3rem;
+    }
+    .search-section {
+      background: #fff;
+      padding: 2rem;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      margin-bottom: 3rem;
+    }
+    input[type="text"] {
+      width: 100%;
+      padding: 1rem;
+      border: 2px solid #ddd;
+      border-radius: 6px;
+      font-size: 1.1rem;
+      transition: border-color 0.3s;
+      font-family: inherit;
+    }
+    input[type="text"]:focus {
+      outline: none;
+      border-color: #0066cc;
+      box-shadow: 0 0 0 3px rgba(0, 102, 204, 0.1);
+    }
+    button {
+      background: #0066cc;
+      color: #fff;
+      border: none;
+      padding: 1rem 2rem;
+      border-radius: 6px;
+      font-size: 1.1rem;
+      cursor: pointer;
+      transition: all 0.3s;
+      margin-top: 1rem;
+      width: 100%;
+      font-weight: 600;
+    }
+    button:hover {
+      background: #0052a3;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0, 102, 204, 0.3);
+    }
+    button:active { transform: translateY(0); }
+    button:disabled {
+      background: #ccc;
+      cursor: not-allowed;
+      transform: none;
+    }
+    .spinner {
+      border: 2px solid #f3f3f3;
+      border-top: 2px solid #0066cc;
+      border-radius: 50%;
+      width: 20px;
+      height: 20px;
+      animation: spin 1s linear infinite;
+      display: inline-block;
+      margin-right: 0.5rem;
+    }
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    /* Feature Cards */
+    .features {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 2rem;
+      margin-bottom: 3rem;
+    }
+    .feature-card {
+      background: #fff;
+      padding: 2rem;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      text-align: center;
+      transition: all 0.3s;
+      border-top: 4px solid #0066cc;
+    }
+    .feature-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+    }
+    .feature-icon {
+      font-size: 3rem;
+      margin-bottom: 1rem;
+    }
+    .feature-card h3 {
+      font-size: 1.3rem;
+      color: #1a1a1a;
+      margin: 0 0 0.5rem 0;
+    }
+    .feature-card p {
+      font-size: 0.95rem;
+      color: #666;
+      line-height: 1.6;
+    }
+    /* Results */
+    .results {
+      margin-top: 2rem;
+      padding: 2rem;
+      border-radius: 8px;
+      background: #fff;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      display: none;
+    }
+    .results-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1rem;
+    }
+    .results-header h3 {
+      margin: 0;
+      color: #1a1a1a;
+    }
+    .copy-btn {
+      background: #28a745;
+      color: #fff;
+      border: none;
+      padding: 0.5rem 1rem;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 0.9rem;
+    }
+    .copy-btn:hover {
+      background: #218838;
+    }
+    .risk-box {
+      padding: 1.5rem;
+      border-radius: 8px;
+      color: #fff;
+      font-weight: bold;
+      font-size: 1.3rem;
+      text-align: center;
+      border-left: 5px solid;
+      margin-bottom: 1.5rem;
+      animation: slideIn 0.5s ease-out;
+    }
+    .risk-low {
+      background: #d4edda;
+      color: #155724;
+      border-left-color: #28a745;
+    }
+    .risk-medium {
+      background: #fff3cd;
+      color: #856404;
+      border-left-color: #ffc107;
+    }
+    .risk-high {
+      background: #f8d7da;
+      color: #721c24;
+      border-left-color: #dc3545;
+    }
+    ul.findings {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+    ul.findings li {
+      padding: 1rem;
+      background: #f8f9fa;
+      margin-bottom: 0.5rem;
+      border-radius: 4px;
+      border-left: 4px solid #0066cc;
+      animation: fadeIn 0.6s ease-out;
+    }
+    /* Safety Tips */
+    .safety-tips {
+      background: #fff;
+      padding: 2rem;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      margin-top: 3rem;
+    }
+    .safety-tips h2 {
+      color: #1a1a1a;
+      margin-top: 0;
+      border-bottom: 3px solid #0066cc;
+      padding-bottom: 1rem;
+    }
+    .safety-tips ul {
+      list-style: none;
+      padding: 0;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 1.5rem;
+    }
+    .safety-tips li {
+      padding: 1rem;
+      background: #f8f9fa;
+      border-radius: 6px;
+      border-left: 4px solid #28a745;
+    }
+    .safety-tips li::before {
+      content: '✓ ';
+      color: #28a745;
+      font-weight: bold;
+    }
+    /* Animations */
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateX(-20px); }
+      to { opacity: 1; transform: translateX(0); }
+    }
+    .fade-in { animation: fadeIn 0.6s ease-out; }
+    .slide-up { animation: slideIn 0.6s ease-out; }
+    /* Responsive */
+    @media (max-width: 768px) {
+      h1 { font-size: 1.8rem; }
+      .features { grid-template-columns: 1fr; }
+      .safety-tips ul { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1 class="fade-in">URL Safety Checker</h1>
+    <p class="subtitle">Advanced detection for modern phishing threats</p>
+    
+    <div class="search-section fade-in">
+      <input id="urlInput" type="text" placeholder="Enter URL to check..." />
+      <button id="checkBtn">Check URL</button>
+    </div>
+
+     <div id="output" class="results" style="display:none;"></div>
+
+    <div class="features fade-in">
+      <div class="feature-card">
+        <div class="feature-icon">🔍</div>
+        <h3>Typosquatting Detection</h3>
+        <p>Identifies popular domain misspellings designed to trick users (e.g., g00gle.com).</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">⚠️</div>
+        <h3>Phishing Analysis</h3>
+        <p>Detects suspicious keywords, homoglyphs, and social engineering tactics.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🔗</div>
+        <h3>URL Structure Check</h3>
+        <p>Analyzes protocol, TLD, IP addresses, and unusual domain patterns.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🛡️</div>
+        <h3>Threat Analysis</h3>
+        <p>Scans for shorteners, data URIs, encoding tricks, and encoded payloads.</p>
+      </div>
+    </div>
+
+    <div class="safety-tips fade-in">
+      <h2>Safety Tips</h2>
+      <ul>
+        <li>Always check the URL carefully before clicking.</li>
+        <li>Look for HTTPS and a padlock symbol in your browser.</li>
+        <li>Avoid entering personal information on untrusted sites.</li>
+        <li>Use two-factor authentication for important accounts.</li>
+        <li>Be wary of unexpected email links requesting verification.</li>
+        <li>Use a reputable antivirus or browser protection tool.</li>
+      </ul>
+    </div>
+
+    <footer style="text-align: center; margin-top: 3rem; padding: 1rem; color: #666; font-size: 0.9rem;">
+      <p>Advanced URL Safety Checker v2.0 | Built with modern web technologies | Last updated: March 2026</p>
+    </footer>
+  </div>
+  <script>
+    function analyzeURL(url) {
+      let score = 0;
+      let reasons = [];
+      try {
+        const urlObj = new URL(url.startsWith('http') ? url : `https://${url}`);
+        const normalized = url.toLowerCase();
+        const hostname = urlObj.hostname;
+        const path = urlObj.pathname;
+        const search = urlObj.search;
+        // 1. Length Check
+        if (url.length > 54) {
+          score += 10;
+          reasons.push("URL is unusually long (common in phishing)");
+        }
+        // 2. Suspicious Keywords
+        const suspiciousTerms = ['secure', 'login', 'verify', 'update', 'banking', 'account', 'signin', 'confirm', 'alert', 'urgent', 'password', 'credential'];
+        suspiciousTerms.forEach(term => {
+          if (hostname.includes(term) || path.includes(term) || search.includes(term)) {
+            score += 20;
+            reasons.push(`Contains suspicious keyword: "${term}"`);
+          }
+        });
+        // 3. Subdomain Check
+        const dotCount = (hostname.match(/\./g) || []).length;
+        if (dotCount > 3) {
+          score += 15;
+          reasons.push("Excessive subdomains detected");
+        }
+        // 4. IP Address Check
+        const ipRegex = /\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}/;
+        if (ipRegex.test(hostname)) {
+          score += 40;
+          reasons.push("URL uses an IP address instead of a domain name");
+        }
+        // 5. Dash/Hyphen Check
+        if (hostname.includes('-')) {
+          score += 10;
+          reasons.push("Presence of hyphens in domain (common in fake sites)");
+        }
+        // 6. Protocol Check
+        const proto = urlObj.protocol;
+        if (proto !== 'https:') {
+          score += 20;
+          reasons.push("Non-HTTPS protocol detected");
+        }
+        // 7. Suspicious TLDs
+        const suspectTlds = ['.xyz', '.top', '.club', '.online', '.site', '.vip', '.cc', '.tk', '.ml', '.ga', '.cf'];
+        suspectTlds.forEach(tld => {
+          if (hostname.endsWith(tld)) {
+            score += 15;
+            reasons.push(`Uses uncommon/suspicious TLD: "${tld}"`);
+          }
+        });
+        // 8. Look for '@' or user info in URL
+        if (url.includes('@')) {
+          score += 25;
+          reasons.push("Contains '@' symbol (may hide true destination)");
+        }
+        // 9. Punycode/Unicode characters
+        if (/xn--|%[0-9A-Fa-f]{2}/.test(hostname)) {
+          score += 15;
+          reasons.push("Domain uses punycode or encoded characters");
+        }
+        // 10. Suspicious port numbers
+        const port = urlObj.port;
+        if (port && !['80', '443'].includes(port)) {
+          score += 10;
+          reasons.push(`Non-standard port used: ${port}`);
+        }
+        // 11. Path length / query strings
+        if (path.length > 100 || search.length > 50) {
+          score += 5;
+          reasons.push("Very long path or query string");
+        }
+        // 12. Typosquatting Check
+        const popularDomains = ['google.com', 'facebook.com', 'paypal.com', 'amazon.com', 'microsoft.com', 'apple.com', 'netflix.com', 'instagram.com', 'twitter.com', 'linkedin.com'];
+        popularDomains.forEach(domain => {
+          const base = domain.split('.')[0];
+          const variations = [base.replace('o', '0'), base.replace('a', '4'), base.replace('e', '3'), base.replace('i', '1'), base.replace('l', '1'), base + '1', base + '2'];
+          variations.forEach(varia => {
+            if (hostname.includes(varia) && !hostname.includes(domain)) {
+              score += 25;
+              reasons.push(`Possible typosquatting: resembles "${domain}"`);
+            }
+          });
+        });
+        // 13. Homoglyph Attack
+        const homoglyphRegex = /[\u0400-\u04FF\u0500-\u052F\u2DE0-\u2DFF\uA640-\uA69F]/; // Cyrillic, etc.
+        if (homoglyphRegex.test(hostname)) {
+          score += 20;
+          reasons.push("Domain contains homoglyph characters (look-alike letters)");
+        }
+        // 14. URL Shorteners
+        const shorteners = ['bit.ly', 'tinyurl.com', 'goo.gl', 't.co', 'ow.ly', 'is.gd', 'buff.ly', 'adf.ly', 'bit.do', 'mcaf.ee'];
+        if (shorteners.some(short => hostname.includes(short))) {
+          score += 15;
+          reasons.push("Uses URL shortener service (may hide malicious link)");
+        }
+        // 15. Data URIs or JavaScript
+        if (url.startsWith('data:') || url.startsWith('javascript:')) {
+          score += 30;
+          reasons.push("URL is a data URI or JavaScript link (potentially malicious)");
+        }
+        // 16. Base64 in URL
+        const base64Regex = /[A-Za-z0-9+/=]{20,}/;
+        if (base64Regex.test(url)) {
+          score += 10;
+          reasons.push("URL contains long base64-encoded string (common in phishing)");
+        }
+        // 17. Excessive Query Parameters
+        const paramCount = (search.match(/[?&][^=&]*/g) || []).length;
+        if (paramCount > 5) {
+          score += 5;
+          reasons.push("Excessive number of query parameters");
+        }
+        // 18. Numbers in Domain
+        const numberInDomain = /\d/.test(hostname.split('.')[0]);
+        if (numberInDomain) {
+          score += 10;
+          reasons.push("Domain name contains numbers (suspicious)");
+        }
+        // 19. Domain Length
+        const domainParts = hostname.split('.');
+        const mainDomain = domainParts.slice(-2).join('.');
+        if (mainDomain.length < 4 || mainDomain.length > 253) {
+          score += 5;
+          reasons.push("Unusual domain length");
+        }
+        // 20. Mixed Case in Domain
+        if (/[a-z][A-Z]|[A-Z][a-z]/.test(hostname)) {
+          score += 5;
+          reasons.push("Mixed case in domain (uncommon)");
+        }
+      } catch (e) {
+        return { error: 'Invalid URL format' };
+      }
+      let result = "Safe";
+      if (score >= 70) result = "High Risk";
+      else if (score >= 35) result = "Moderate Risk";
+      return {
+        url: url,
+        riskScore: score,
+        verdict: result,
+        flags: reasons
+      };
+    }
+    document.getElementById('checkBtn').addEventListener('click', () => {
+      const url = document.getElementById('urlInput').value.trim();
+      if (!url) return;
+      const btn = document.getElementById('checkBtn');
+      btn.innerHTML = '<div class="spinner"></div>Scanning...';
+      btn.disabled = true;
+      setTimeout(() => {
+        const report = analyzeURL(url);
+        const output = document.getElementById('output');
+        output.style.display = 'block';
+        output.innerHTML = '';
+        if (report.error) {
+          output.innerHTML = `<p style="color:#dc3545;text-align:center;font-weight:bold;padding:1rem;">${report.error}</p>`;
+          btn.textContent = 'Check URL';
+          btn.disabled = false;
+          return;
+        }
+        // Results header
+        const header = document.createElement('div');
+        header.className = 'results-header';
+        header.innerHTML = '<h3>Analysis Results</h3><button class="copy-btn" onclick="copyResults()">Copy Results</button>';
+        output.appendChild(header);
+        // Risk box
+        const riskClass = report.verdict === 'High Risk' ? 'risk-high' : report.verdict === 'Moderate Risk' ? 'risk-medium' : 'risk-low';
+        const riskBox = document.createElement('div');
+        riskBox.className = `risk-box ${riskClass}`;
+        riskBox.textContent = `Risk Level: ${report.verdict} (Score: ${report.riskScore})`;
+        output.appendChild(riskBox);
+        // Findings
+        if (report.flags.length) {
+          const ul = document.createElement('ul');
+          ul.className = 'findings';
+          report.flags.forEach(flag => {
+            const li = document.createElement('li');
+            li.className = 'fade-in';
+            li.textContent = flag;
+            ul.appendChild(li);
+          });
+          output.appendChild(ul);
+        }
+        btn.textContent = 'Check URL';
+        btn.disabled = false;
+      }, 1500);
+    });
+    function copyResults() {
+      const output = document.getElementById('output');
+      const text = output.innerText || output.textContent;
+      navigator.clipboard.writeText(text).then(() => {
+        alert('Results copied to clipboard!');
+      }).catch(err => {
+        console.error('Failed to copy: ', err);
+      });
+    }
+  </script>
+</body>
+</html>
